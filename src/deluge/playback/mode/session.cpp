@@ -2474,28 +2474,8 @@ void Session::doTickForward(int32_t posIncrement) {
 		playbackHandler.swungTicksTilNextEvent = std::min(ticksTilNextArpEvent, playbackHandler.swungTicksTilNextEvent);
 	}
 
-	// Do sequencer modes too - similar to arpeggiator handling
-	for (Output* thisOutput = currentSong->firstOutput; thisOutput; thisOutput = thisOutput->next) {
-		if (thisOutput->getActiveClip() && currentSong->isClipActive(thisOutput->getActiveClip())) {
-			Clip* activeClip = thisOutput->getActiveClip();
-			if (activeClip->type == ClipType::INSTRUMENT) {
-				InstrumentClip* instrumentClip = static_cast<InstrumentClip*>(activeClip);
-				if (instrumentClip->hasSequencerMode()) {
-					ModelStackWithTimelineCounter* modelStackWithTimelineCounter =
-					    modelStack->addTimelineCounter(instrumentClip);
-					auto* sequencerMode = instrumentClip->getSequencerMode();
-					if (sequencerMode) {
-						int32_t ticksTilNextSequencerEvent = sequencerMode->processPlayback(
-						    modelStackWithTimelineCounter, playbackHandler.lastSwungTickActioned);
-						if (ticksTilNextSequencerEvent > 0) {
-							playbackHandler.swungTicksTilNextEvent =
-							    std::min(ticksTilNextSequencerEvent, playbackHandler.swungTicksTilNextEvent);
-						}
-					}
-				}
-			}
-		}
-	}
+	// Sequencer mode processing is now done inline in InstrumentClip::processCurrentPos
+	// to keep the same call site and timing as the old branch's embedded lanes playback.
 
 	/*
 	for (Instrument* thisInstrument = currentSong->firstInstrument; thisInstrument; thisInstrument =

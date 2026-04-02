@@ -92,6 +92,9 @@ public:
 	// === Select encoder (for InstrumentClipView delegation) ===
 	bool handleSelectEncoder(int32_t offset);
 
+	// === Audition pad + select encoder: open lane editor menu ===
+	bool enterLaneEditor();
+
 	// === Performance mode (sidebar toggle) ===
 	bool isPerformanceMode() const { return performanceMode_; }
 	void togglePerformanceMode();
@@ -118,7 +121,6 @@ private:
 	// === Helpers ===
 	static int32_t lanesRowToLaneIdx(int32_t yDisplay);
 	static RGB laneColor(int32_t laneIdx);
-	bool enterLaneEditor();
 
 	void stopCurrentNote(void* modelStack);
 	void resetPlaybackState();

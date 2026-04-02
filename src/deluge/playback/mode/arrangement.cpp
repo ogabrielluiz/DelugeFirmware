@@ -312,26 +312,7 @@ justDoArp:
 			int32_t ticksTilNextArpEvent = output->doTickForwardForArp(modelStack, posForArp);
 			nearestArpTickTime = std::min(ticksTilNextArpEvent, nearestArpTickTime);
 
-			// Do sequencer modes too - similar to arpeggiator handling
-			if (output->getActiveClip() && output->getActiveClip()->activeIfNoSolo) {
-				Clip* activeClip = output->getActiveClip();
-				if (activeClip->type == ClipType::INSTRUMENT) {
-					InstrumentClip* instrumentClip = static_cast<InstrumentClip*>(activeClip);
-					if (instrumentClip->hasSequencerMode()) {
-						ModelStackWithTimelineCounter* modelStackWithTimelineCounter =
-						    modelStack->addTimelineCounter(instrumentClip);
-						auto* sequencerMode = instrumentClip->getSequencerMode();
-						if (sequencerMode) {
-							int32_t ticksTilNextSequencerEvent = sequencerMode->processPlayback(
-							    modelStackWithTimelineCounter, playbackHandler.lastSwungTickActioned);
-							if (ticksTilNextSequencerEvent > 0) {
-								playbackHandler.swungTicksTilNextEvent =
-								    std::min(ticksTilNextSequencerEvent, playbackHandler.swungTicksTilNextEvent);
-							}
-						}
-					}
-				}
-			}
+			// Sequencer mode processing is now done inline in InstrumentClip::processCurrentPos
 		}
 	}
 

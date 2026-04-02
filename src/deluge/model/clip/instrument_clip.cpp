@@ -727,9 +727,13 @@ void InstrumentClip::processCurrentPos(ModelStackWithTimelineCounter* modelStack
 	// We already incremented / decremented noteRowsNumTicksBehindClip and ticksTilNextNoteRowEvent, in the call to
 	// incrementPos().
 
-	// If sequencer mode is active, skip normal note row processing
-	// (sequencer processing is now handled in Session::doTickForward)
+	// If sequencer mode is active, run it inline (like the old branch) and skip normal note row processing
 	if (sequencerMode_) {
+		int32_t ticksTilNextSequencerEvent =
+		    sequencerMode_->processPlayback(modelStack, playbackHandler.lastSwungTickActioned);
+		if (ticksTilNextSequencerEvent > 0 && ticksTilNextSequencerEvent < playbackHandler.swungTicksTilNextEvent) {
+			playbackHandler.swungTicksTilNextEvent = ticksTilNextSequencerEvent;
+		}
 		return;
 	}
 
@@ -4877,6 +4881,16 @@ void InstrumentClip::setSequencerMode(const std::string& modeName) {
 	// Set active mode
 	if (sequencerMode_) {
 		sequencerModeName_ = modeName;
+
+		// Flush any stale notes from the instrument's arpeggiator so they don't
+		// ghost-trigger on the first playback tick in the new mode.
+		if (output && output->type != OutputType::KIT) {
+			char msMemory[MODEL_STACK_MAX_SIZE];
+			ModelStack* ms = setupModelStackWithSong(msMemory, currentSong);
+			ModelStackWithTimelineCounter* msTc = ms->addTimelineCounter(this);
+			sequencerMode_->stopAllNotes(msTc);
+		}
+
 		expectEvent();
 	}
 }

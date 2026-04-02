@@ -884,7 +884,15 @@ doCancelPopup:
 				}
 			}
 			else if (currentUIMode == UI_MODE_AUDITIONING) {
-				if (enterNoteRowEditor()) {
+				InstrumentClip* clip = getCurrentInstrumentClip();
+				if (clip && clip->hasSequencerMode() && clip->getSequencerModeName() == "lanes") {
+					auto* lanesMode = static_cast<deluge::model::clip::sequencer::modes::LanesSequencerMode*>(
+					    clip->getSequencerMode());
+					if (lanesMode && lanesMode->enterLaneEditor()) {
+						return ActionResult::DEALT_WITH;
+					}
+				}
+				else if (enterNoteRowEditor()) {
 					return ActionResult::DEALT_WITH;
 				}
 			}
@@ -1921,6 +1929,18 @@ void InstrumentClipView::selectEncoderAction(int8_t offset) {
 				}
 				// Sequencer mode didn't handle it (no valid pad held) - only allow preset changing if NOT in
 				// UI_MODE_NOTES_PRESSED This prevents blank/invalid pads (x8-x15) from triggering iterance/prob
+				if (currentUIMode != UI_MODE_NOTES_PRESSED) {
+					InstrumentClipMinder::selectEncoderAction(offset);
+				}
+				return;
+			}
+			// Check for lanes sequencer
+			else if (clip->getSequencerModeName() == "lanes") {
+				auto* lanesMode =
+				    static_cast<deluge::model::clip::sequencer::modes::LanesSequencerMode*>(sequencerMode);
+				if (lanesMode->handleSelectEncoder(offset)) {
+					return;
+				}
 				if (currentUIMode != UI_MODE_NOTES_PRESSED) {
 					InstrumentClipMinder::selectEncoderAction(offset);
 				}
